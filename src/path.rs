@@ -1,9 +1,10 @@
 use std::sync::Arc;
+use crate::pathiter::PathIter;
 
 #[derive(Debug)]
 pub struct Path {
     coord: (u8, u8),
-    prev: Option<Arc<Path>>,
+    pub prev: Option<Arc<Path>>,
 }
 
 impl Path {
@@ -14,8 +15,15 @@ impl Path {
         }
     }
 
-    pub fn get_coord(&self) -> &(u8, u8) {
-        &self.coord
+    pub fn get_coord(&self) -> (u8, u8) {
+        self.coord
+    }
+
+    pub fn get_prev(&self) -> &Option<Arc<Path>> {
+        // get the arc out of the option, clone it, then wrap it back up in the option
+        // if their isn't anything there then just make it a None
+
+        &self.prev
     }
 
     // pub fn iter(&self) -> PathIter<&(u8, u8)> {
@@ -24,6 +32,15 @@ impl Path {
 
     pub fn neighbors(&self, size: &(u8, u8)) {
         
+    }
+}
+
+impl<'a> IntoIterator for &'a Path {
+    type Item = (u8, u8);
+    type IntoIter = PathIter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        PathIter::new(self.get_prev())
     }
 }
 

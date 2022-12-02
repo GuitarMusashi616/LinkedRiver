@@ -1,87 +1,63 @@
-pub struct PathIter {
+use std::sync::Arc;
+use crate::path::Path;
 
+pub struct PathIter<'a> {
+    tail: &'a Option<Arc<Path>>,
 }
 
-impl PathIter {
-    pub fn new() -> Self {
+impl<'a> PathIter<'a> {
+    pub fn new(arcpath: &'a Option<Arc<Path>>) -> Self {
         Self {
-
+            tail: arcpath,
         }
     }
 }
 
-// impl Iterator for PathIter {
-//     type Item = &'a(u8, u8);
+impl<'a> Iterator for PathIter<'a> {
+    type Item = (u8, u8);
 
-//     fn next(&mut self) -> Option<'aSelf::Item> {
+    fn next(&mut self) -> Option<Self::Item> {
+        // save tail
+        // point tail to prev
+        // return saved tail
 
+        // iterator will need to reference the next location, having its own arc would allow it to
+        // reference that memory from heap whenever it wanted
+        
+        self.tail.as_ref().map(|path| {
+            self.tail = path.get_prev();
+            path.get_coord()
+        })
+    }
+}
+
+// impl IntoIterator for Path {
+//     type Item = (u8, u8);
+//     type IntoIter = PathIter<'a>;
+
+//     fn into_iter(self) -> Self::IntoIter {
+//         PathIter::new(&Some(Arc::new(self)))
 //     }
 // }
 
-#[derive(Debug)]
-struct Collection {
-    
-}
-
-impl Collection {
-    fn new() -> Self {
-        Self {}
-    }
-}
-
-impl IntoIterator for Collection {
-    type Item = i8;
-    type IntoIter = CountIter;
-
-    fn into_iter(self) -> Self::IntoIter {
-        CountIter::new()
-    }
-}
-
-impl IntoIterator for &Collection {
-    type Item = i8;
-    type IntoIter = CountIter;
-
-    fn into_iter(self) -> Self::IntoIter {
-        CountIter::new()
-    }
-}
-
-struct CountIter {
-    count: i8,
-}
-
-impl CountIter {
-    fn new() -> Self {
-        Self {
-            count: 0,
-        }
-    }
-}
-
-impl Iterator for CountIter {
-    type Item = i8;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let next = self.count;
-        if next > 20 {
-            return None;
-        }
-        self.count += 1;
-        Some(next)
-    }
-}
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_simple_iter() {
-        let coll = Collection::new();
-        for i in &coll {
-            println!("{}", i);
+    fn test_iter_path() {
+        let path0 = Arc::new(Path::new((0,0), None));
+        let path1 = Arc::new(Path::new((0,1), Some(Arc::clone(&path0))));
+        let path2 = Arc::new(Path::new((1,1), Some(Arc::clone(&path1))));
+        let path3 = Arc::new(Path::new((2,1), Some(Arc::clone(&path2))));
+        // let path3 = Path::new((2,1), Some(Arc::clone(&path2)));
+
+        for (x, y) in path3.as_ref() {
+            println!("path: {:?}", (x, y));
         }
-        dbg!(coll);
+
+        dbg!(path3);
     }
 }
+
