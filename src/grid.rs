@@ -1,22 +1,24 @@
-use std::fmt;
+use std::{fmt, sync::Arc};
 use rand::Rng;
+
+use crate::path::Path;
 
 #[derive(Debug)]
 pub struct Grid {
-    data: Vec<Vec<char>>,
+    pub data: Vec<Vec<char>>,
 }
 
 impl Grid {
     pub fn new(rows: u8, cols: u8) -> Self {
         Self {
             // data: vec![vec!['⬜'; cols as usize]; rows as usize],
-            data: vec![vec!['🔵'; cols as usize]; rows as usize],
+            data: vec![vec!['⬜'; cols as usize]; rows as usize],
         }
     }
 
     pub fn set_coords(mut self, values: Vec<(u8, u8)>) -> Self {
         for (row, col) in values {
-            self.data[row as usize][col as usize] = '🌲';
+            self.data[row as usize][col as usize] = '🔵';
         }
         self
     }

@@ -3,8 +3,11 @@
 #![allow(unused_variables)]
 
 mod path;
+mod pathiter;
 mod grid;
 mod stackgrid;
+mod threadpool;
+mod itertest;
 use path::Path;
 use rand::Rng;
 use grid::Grid;
