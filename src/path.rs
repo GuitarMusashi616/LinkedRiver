@@ -1,4 +1,4 @@
-use std::{sync::Arc, collections::HashSet};
+use std::{sync::Arc, collections::{HashSet, HashMap}};
 use crate::pathiter::PathIter;
 
 const ADJ: [(i8, i8); 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
@@ -28,34 +28,37 @@ impl Path {
         &self.prev
     }
 
-    pub fn find_neighbors(&self, size: (u8, u8)) -> Vec<(u8, u8)> {
-        let mut output = Vec::new();
+    pub fn find_neighbors(&self, size: (u8, u8)) -> HashSet<(u8, u8)> {
+        let mut output = HashSet::new();
         for (dx, dy) in ADJ {
             let (x, y) = (self.coord.0 as i8 + dx, self.coord.1 as i8 + dy);
             if x < 0 || y < 0 || x >= size.0 as i8 || y >= size.1 as i8 {
                 continue;
             }
-            output.push((x as u8, y as u8));
+            output.insert((x as u8, y as u8));
         }
         output
-
     }
 
-    pub fn get_new_score(&self, prev_score: i32, size: (u8, u8)) -> i32 {
+    pub fn get_new_score(&self, prev_score: i32, size: (u8, u8)) -> (i32, HashSet<(u8, u8)>) {
         // calculates the new score based on the prev score before path0 was added on
-        let neighbors: HashSet<(u8, u8)> = self.find_neighbors(size).into_iter().collect();
-        
+        let neighbors = self.find_neighbors(size);
+        let mut forest_tiles = neighbors.clone();
+
         let mut river_count = 0;
         
         for coord in self {
             if neighbors.contains(&coord) {
                 river_count += 1;
+                forest_tiles.remove(&coord);
             }
         }
 
         let num_adj = neighbors.len() as i32;
         let tree_count = num_adj - river_count;
-        prev_score + (-4*river_count) + (4*tree_count)
+        let score = prev_score + (-4*river_count) + (4*tree_count);
+
+        (score, forest_tiles)
     }
 }
 
@@ -113,16 +116,16 @@ mod tests {
         let path3 = Arc::new(Path::new((2,1), Some(Arc::clone(&path2))));
         // this path0 should return a score of +8 = +8 total
 
-        let score = path0.get_new_score(0, (5, 5));
+        let (score, set) = path0.get_new_score(0, (5, 5));
         assert_eq!(score, 8);
 
-        let score = path1.get_new_score(8, (5, 5));
+        let (score, set) = path1.get_new_score(8, (5, 5));
         assert_eq!(score, 12);
 
-        let score = path2.get_new_score(12, (5, 5));
+        let (score, set) = path2.get_new_score(12, (5, 5));
         assert_eq!(score, 20);
 
-        let score = path3.get_new_score(20, (5, 5));
+        let (score, set) = path3.get_new_score(20, (5, 5));
         assert_eq!(score, 28);
     }
 }

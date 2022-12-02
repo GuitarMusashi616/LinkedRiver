@@ -42,8 +42,6 @@ impl<T> ThreadMessageDistributor<T> {
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use std::{collections::HashSet, thread::sleep, time::Duration, sync::mpsc::Receiver};
@@ -60,32 +58,44 @@ mod tests {
 
         let mut tmd = ThreadMessageDistributor::new();
         let mut handles = Vec::new();
+        let size = (10, 10);
+        let (txtobase, rxbase) = mpsc::channel();
 
         for i in 0..7 {
-            let (txthread, rxthread): (Sender<Arc<Path>>, Receiver<Arc<Path>>) = mpsc::channel();
+            let (txthread, rxthread): (Sender<(Arc<Path>, i32)>, Receiver<(Arc<Path>, i32)>) = mpsc::channel();
             tmd.add(txthread);
+            let txtobaseclone = txtobase.clone();
 
             // worker thread
             let handle = thread::spawn(move|| {
-                while let Ok(path) = rxthread.recv() {
-                    println!("thread {}: {:?}", i, path.get_coord());
+                while let Ok((path, score)) = rxthread.recv() {
+                    let (new_score, next_coords) = path.get_new_score(score, size);
+                    let coord_disp: Vec<(u8, u8)> = path.as_ref().into_iter().collect();
+                    println!("thread {}: {:?} = {} => {:?}", i, coord_disp, new_score, next_coords);
+                    for coord in next_coords {
+                        let new_path = Arc::new(Path::new(coord, Some(Arc::clone(&path))));
+                        txtobaseclone.send((new_path, new_score)).expect("base already 'hung up'");
+                    }
+
                 }
             });
             handles.push(handle);
         }
 
-        let (tx, rx) = mpsc::channel();
-
-        // distrutor thread
-        let handle = thread::spawn(move|| {
-            while let Ok(msg) = rx.recv() {
+        // distributor thread
+        let distributor = thread::spawn(move|| {
+            while let Ok(msg) = rxbase.recv() {
                 tmd.send(msg);
             }
         });
-        handles.push(handle);
+        handles.push(distributor);
 
         let path0 = Arc::new(Path::new((0, 0), None));
-        tx.send(path0).expect("distributor thread already 'hung up'");
+        txtobase.send((path0, 0)).expect("distributor thread already 'hung up'");
+
+        for handle in handles {
+            handle.join().expect("deadlock");
+        }
     }
 
     #[test]
