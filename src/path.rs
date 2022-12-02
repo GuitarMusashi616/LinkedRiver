@@ -1,10 +1,12 @@
 use std::sync::Arc;
 use crate::pathiter::PathIter;
 
+const ADJ: [(i8, i8); 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
+
 #[derive(Debug)]
 pub struct Path {
     coord: (u8, u8),
-    pub prev: Option<Arc<Path>>,
+    prev: Option<Arc<Path>>,
 }
 
 impl Path {
@@ -26,12 +28,16 @@ impl Path {
         &self.prev
     }
 
-    // pub fn iter(&self) -> PathIter<&(u8, u8)> {
-
-    // }
-
-    pub fn neighbors(&self, size: &(u8, u8)) {
-        
+    pub fn find_neighbors(&self, size: (u8, u8)) -> Vec<(u8, u8)> {
+        let mut output = Vec::new();
+        for (dx, dy) in ADJ {
+            let (x, y) = (self.coord.0 as i8 + dx, self.coord.1 as i8 + dy);
+            if x < 0 || y < 0 || x >= size.0 as i8 || y >= size.1 as i8 {
+                continue;
+            }
+            output.push((x as u8, y as u8));
+        }
+        output
     }
 }
 
@@ -46,6 +52,8 @@ impl<'a> IntoIterator for &'a Path {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use super::*;
 
     #[test]
@@ -64,5 +72,18 @@ mod tests {
 
         let expected = vec![(2, 1), (1, 1), (0, 1), (0, 0)];
         assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_neighbors() {
+        let path0 = Arc::new(Path::new((0,0), None));
+        let path1 = Arc::new(Path::new((0,1), Some(Arc::clone(&path0))));
+        let path2 = Arc::new(Path::new((1,1), Some(Arc::clone(&path1))));
+        let path3 = Arc::new(Path::new((2,1), Some(Arc::clone(&path2))));
+
+        let res = path2.find_neighbors((5, 5));
+        let exp = vec![(0, 1), (2, 1), (1, 2), (1, 0)];
+        let (res, exp): (HashSet<_>, HashSet<_>) = (res.into_iter().collect(), exp.into_iter().collect());
+        assert_eq!(res, exp);
     }
 }
