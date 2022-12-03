@@ -17,7 +17,8 @@ use std::sync::{Arc, mpsc};
 use std::thread;
 
 fn main() {
-    threadpool::threadpool_demo();
+    let size = (12, 5);
+    threadpool::threadpool_demo(size);
 }
 
 #[cfg(test)]

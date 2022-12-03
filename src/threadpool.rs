@@ -45,7 +45,7 @@ impl<T> ThreadMessageDistributor<T> {
     }
 }
 
-pub fn threadpool_demo() {
+pub fn threadpool_demo(size: (u8, u8)) {
     // create 7 worker threads that receive arc<path> and send 3 arc paths (or nothing) and the
     // score
 
@@ -54,7 +54,6 @@ pub fn threadpool_demo() {
 
     let mut tmd = ThreadMessageDistributor::new();
     let mut handles = Vec::new();
-    let size = (10, 10);
     let (txtobase, rxbase) = mpsc::channel();
     let (txhighscore, rxhighscore) = mpsc::channel();
 
