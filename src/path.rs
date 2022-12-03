@@ -6,11 +6,11 @@ const ADJ: [(i8, i8); 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
 #[derive(Debug)]
 pub struct Path {
     coord: (u8, u8),
-    prev: Option<Arc<Path>>,
+    prev: Option<Arc<Self>>,
 }
 
 impl Path {
-    pub fn new(coord: (u8, u8), prev: Option<Arc<Path>>) -> Self {
+    pub fn new(coord: (u8, u8), prev: Option<Arc<Self>>) -> Self {
         Self {
             coord,
             prev,
@@ -21,12 +21,12 @@ impl Path {
         self.coord
     }
 
-    pub fn get_prev(&self) -> &Option<Arc<Path>> {
+    pub fn get_prev(&self) -> &Option<Arc<Self>> {
         // get the arc out of the option, clone it, then wrap it back up in the option
         // if their isn't anything there then just make it a None
-
         &self.prev
     }
+
 
     pub fn find_neighbors(&self, size: (u8, u8)) -> HashSet<(u8, u8)> {
         let mut output = HashSet::new();
@@ -67,7 +67,7 @@ impl<'a> IntoIterator for &'a Path {
     type IntoIter = PathIter<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
-        PathIter::new(self.get_prev())
+        PathIter::new(self.get_coord(), self.get_prev())
     }
 }
 

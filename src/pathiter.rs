@@ -2,12 +2,14 @@ use std::sync::Arc;
 use crate::path::Path;
 
 pub struct PathIter<'a> {
+    first: Option<(u8, u8)>,
     tail: &'a Option<Arc<Path>>,
 }
 
 impl<'a> PathIter<'a> {
-    pub fn new(arcpath: &'a Option<Arc<Path>>) -> Self {
+    pub fn new(coord: (u8, u8), arcpath: &'a Option<Arc<Path>>) -> Self {
         Self {
+            first: Some(coord),
             tail: arcpath,
         }
     }
@@ -23,6 +25,9 @@ impl<'a> Iterator for PathIter<'a> {
 
         // iterator will need to reference the next location, having its own arc would allow it to
         // reference that memory from heap whenever it wanted
+        if self.first.is_some() {
+            return self.first.take();
+        }
         
         self.tail.as_ref().map(|path| {
             self.tail = path.get_prev();
