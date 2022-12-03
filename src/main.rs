@@ -17,15 +17,7 @@ use std::sync::{Arc, mpsc};
 use std::thread;
 
 fn main() {
-    let mut coords = Vec::new();
-    let mut rng = rand::thread_rng();
-    for _ in 0..50 {
-        coords.push((rng.gen_range(0..5), rng.gen_range(0..10)))
-    }
-    let grid = Grid::from(coords);
-    // dbg!(grid);
-    println!("{}", grid);
-    let _ = std::io::stdin().read_line(&mut String::new());
+    threadpool::threadpool_demo();
 }
 
 #[cfg(test)]
